@@ -42,7 +42,7 @@ def normalizeSpace(inText):
 def tokenize(inText):
     """Split into word tokens, merging <lb> and <pb> in with preceding token"""
     tokens = re.split(' (?!<(lb|pb|pageRef))', inText)  # Negative lookahead for '<lb', '<pb', '<pageRef'
-    return tokens
+    return [token for token in tokens if token] #TODO: Why does the split create empty tokens?
 
 
 def processRdg(siglum, inText):
