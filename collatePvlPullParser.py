@@ -37,6 +37,14 @@ def normalizeSpace(inText):
     return re.sub('\s+', ' ', inText)
 
 
+def joinLb(inList):
+    pass
+
+def tokenize(inText):
+    tokens = re.split(' (?!<[lp]b)', inText) # merge <lb> and <pb> in with preceding token
+    return tokens
+
+
 def extract(input_xml):
     # Start pulling; it continues automatically
     doc = pulldom.parse(input_xml)
@@ -71,7 +79,7 @@ def extract(input_xml):
             currentWit += normalizeSpace(node.data)
         elif event == pulldom.END_ELEMENT and node.localName in sigla:
             inWit = False
-            inputText[currentSiglum] = currentWit
+            inputText[currentSiglum] = tokenize(currentWit)
     return
 
 
