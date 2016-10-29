@@ -21,12 +21,13 @@
 # Inline elements (with content) retained in normalization: pageRef, sup, sub, choice, option
 
 import sys
-
-sys.path.append('/Users/djb/collatex/collatex-pythonport')
+sys.path.append('/Users/djb/collatex/collatex-pythonport')  # CollateX from repo; not installed
 from collatex import *
 from xml.dom import pulldom
 import re
+import json
 
+# GIs fall into one four classes
 ignore = ['omitted', 'textEnd', 'blank', 'end']
 inlineEmpty = ['lb', 'pb']
 inlineContent = ['sup', 'sub', 'pageRef', 'choice', 'option']
@@ -34,18 +35,27 @@ sigla = ['Lav', 'Tro', 'Rad', 'Aka', 'Ipa', 'Xle', 'Kom', 'Tol', 'NAk', 'Bych', 
 
 
 def normalizeSpace(inText):
+    """Replaces all whitespace spans with single space characters"""
     return re.sub('\s+', ' ', inText)
 
 
-def joinLb(inList):
-    pass
-
 def tokenize(inText):
-    tokens = re.split(' (?!<[lp]b)', inText) # merge <lb> and <pb> in with preceding token
+    """Split into word tokens, merging <lb> and <pb> in with preceding token"""
+    tokens = re.split(' (?!<(lb|pb|pageRef))', inText)  # Negative lookahead for '<lb', '<pb', '<pageRef'
     return tokens
 
 
+def processRdg(siglum, inText):
+    """Returns JSON data for rdg"""
+    witness = {'id': siglum, 'tokens': []}
+    for token in inText:
+        token = {'t': token, 'n': 'placeholder'}
+        witness['tokens'].append(token)
+    return witness
+
+
 def extract(input_xml):
+    """Process entire input XML document, firing on events"""
     # Start pulling; it continues automatically
     doc = pulldom.parse(input_xml)
     inBlock = False
@@ -58,29 +68,31 @@ def extract(input_xml):
         elif event == pulldom.START_ELEMENT and node.localName == 'block':
             inBlock = True
             n = node.getAttribute('column') + '.' + node.getAttribute('line')  # block number
-            inputText = {}
+            rdgs = {}
+            witnesses = []
+            rdgs['witnesses'] = witnesses
         elif event == pulldom.END_ELEMENT and node.localName == 'block':
             inBlock = False
-            print(inputText)
+            print(json.dumps(rdgs, ensure_ascii=False))
         # empty inline elements: lb, pb
         elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
-            currentWit += '<' + node.localName + '/>'
+            currentRdg += '<' + node.localName + '/>'
         # non-empty inline elements: sup, sub, pageRef
         elif event == pulldom.START_ELEMENT and node.localName in inlineContent:
-            currentWit += '<' + node.localName + '>'
+            currentRdg += '<' + node.localName + '>'
         elif event == pulldom.END_ELEMENT and node.localName in inlineContent:
-            currentWit += '</' + node.localName + '>'
+            currentRdg += '</' + node.localName + '>'
         # readings
         elif event == pulldom.START_ELEMENT and node.localName in sigla:
             inWit = True
             currentSiglum = node.localName
-            currentWit = ''
+            currentRdg  = ''
         elif event == pulldom.CHARACTERS and inWit:
-            currentWit += normalizeSpace(node.data)
+            currentRdg += normalizeSpace(node.data)
         elif event == pulldom.END_ELEMENT and node.localName in sigla:
             inWit = False
-            inputText[currentSiglum] = tokenize(currentWit)
-    return
+            witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
+    return True
 
 
 inputFile = open('pvl.xml', 'rb')
