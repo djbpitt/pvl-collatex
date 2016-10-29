@@ -2,6 +2,7 @@
 # Filename: collatePVL.py
 # Developer: David J. Birnbaum (djbpitt@gmail.com)
 # First version: 2015-12-13
+# Last revised: 2016-10-29
 #
 # Syntax: python collatePvl.py
 # Input: pvl.xml
@@ -26,12 +27,15 @@ from collatex import *
 from xml.dom import pulldom
 import re
 
+ignore = ['omitted', 'textEnd', 'blank', 'end']
 inlineEmpty = ['lb', 'pb']
 inlineContent = ['sup', 'sub', 'pageRef', 'choice', 'option']
 sigla = ['Lav', 'Tro', 'Rad', 'Aka', 'Ipa', 'Xle', 'Kom', 'Tol', 'NAk', 'Bych', 'Shakh', 'Likh', 'Ost']
 
+
 def normalizeSpace(inText):
     return re.sub('\s+', ' ', inText)
+
 
 def extract(input_xml):
     # Start pulling; it continues automatically
@@ -40,29 +44,31 @@ def extract(input_xml):
     inWit = False
     for event, node in doc:
         # elements to ignore
-        if event == pulldom.START_ELEMENT and node.localName in ['omitted', 'textEnd', 'blank', 'end']:
+        if event == pulldom.START_ELEMENT and node.localName in ignore:
             continue
+        # process each block as a separate collation set
         elif event == pulldom.START_ELEMENT and node.localName == 'block':
             inBlock = True
-            n = node.getAttribute('column') + '.' + node.getAttribute('line') # block number
+            n = node.getAttribute('column') + '.' + node.getAttribute('line')  # block number
             inputText = {}
         elif event == pulldom.END_ELEMENT and node.localName == 'block':
             inBlock = False
             print(inputText)
         # empty inline elements: lb, pb
         elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
-            currentWit = currentWit + '<' + node.localName + '/>'
+            currentWit += '<' + node.localName + '/>'
         # non-empty inline elements: sup, sub, pageRef
         elif event == pulldom.START_ELEMENT and node.localName in inlineContent:
-            currentWit = currentWit + '<' + node.localName + '>'
+            currentWit += '<' + node.localName + '>'
         elif event == pulldom.END_ELEMENT and node.localName in inlineContent:
-            currentWit = currentWit + '</' + node.localName + '>'
+            currentWit += '</' + node.localName + '>'
+        # readings
         elif event == pulldom.START_ELEMENT and node.localName in sigla:
             inWit = True
             currentSiglum = node.localName
             currentWit = ''
         elif event == pulldom.CHARACTERS and inWit:
-            currentWit = currentWit + normalizeSpace(node.data)
+            currentWit += normalizeSpace(node.data)
         elif event == pulldom.END_ELEMENT and node.localName in sigla:
             inWit = False
             inputText[currentSiglum] = currentWit
