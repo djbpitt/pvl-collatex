@@ -33,6 +33,8 @@ inlineEmpty = ['lb', 'pb']
 inlineContent = ['sup', 'sub', 'pageRef', 'choice', 'option']
 sigla = ['Lav', 'Tro', 'Rad', 'Aka', 'Ipa', 'Xle', 'Kom', 'Tol', 'NAk', 'Bych', 'Shakh', 'Likh', 'Ost']
 
+# Precompile regexes
+regexTokenize = re.compile('\s+(?!<(lb|pb|pageRef))')   # Negative lookahead for '<lb', '<pb', '<pageRef'
 
 def normalizeSpace(inText):
     """Replaces all whitespace spans with single space characters"""
@@ -41,7 +43,7 @@ def normalizeSpace(inText):
 
 def tokenize(inText):
     """Split into word tokens, merging <lb> and <pb> in with preceding token"""
-    tokens = re.split(' (?!<(lb|pb|pageRef))', inText)  # Negative lookahead for '<lb', '<pb', '<pageRef'
+    tokens = regexTokenize.split(inText)
     return [token for token in tokens if token] #TODO: Why does the split create empty tokens?
 
 
@@ -49,9 +51,22 @@ def processRdg(siglum, inText):
     """Returns JSON data for rdg"""
     witness = {'id': siglum, 'tokens': []}
     for token in inText:
-        token = {'t': token, 'n': 'placeholder'}
+        token = {'t': token, 'n': normalize(token)}
         witness['tokens'].append(token)
     return witness
+
+
+def normalize(inText):
+    """Create normalized shadow token for collation purposes
+
+    Strip all tags
+    Strip content of <pageRef> elements
+    Retain only first of <option> elements inside <choice>
+    Lowercase
+    Strip punctuation
+    Strip whitespace
+    """
+    return inText.lower()
 
 
 def extract(input_xml):
