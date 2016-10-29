@@ -58,7 +58,6 @@ def extract(input_xml):
     """Process entire input XML document, firing on events"""
     # Start pulling; it continues automatically
     doc = pulldom.parse(input_xml)
-    inBlock = False
     inWit = False
     for event, node in doc:
         # elements to ignore
@@ -66,13 +65,11 @@ def extract(input_xml):
             continue
         # process each block as a separate collation set
         elif event == pulldom.START_ELEMENT and node.localName == 'block':
-            inBlock = True
             n = node.getAttribute('column') + '.' + node.getAttribute('line')  # block number
             rdgs = {}
             witnesses = []
             rdgs['witnesses'] = witnesses
         elif event == pulldom.END_ELEMENT and node.localName == 'block':
-            inBlock = False
             print(json.dumps(rdgs, ensure_ascii=False))
         # empty inline elements: lb, pb
         elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
@@ -90,6 +87,7 @@ def extract(input_xml):
         elif event == pulldom.CHARACTERS and inWit:
             currentRdg += normalizeSpace(node.data)
         elif event == pulldom.END_ELEMENT and node.localName in sigla:
+            # Witness finished, so process and push its data
             inWit = False
             witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
     return True
