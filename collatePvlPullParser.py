@@ -13,19 +13,11 @@
 #   Children of <manuscripts>: Lav, Tro, Rad, Aka, Ipa, Xle, Kom, Tol, NAk
 #   Children of <block>: Bych, Shakh, Likh
 #   Children of <paradosis>: Ost
-#
-# Tags to ignore, with content to keep: pvl, manuscripts, paradosis, marginalia,
-#   problem
-#
+# Tags to ignore, with content to keep: pvl, manuscripts, paradosis, marginalia, problem
 # Elements to ignore: omitted, textEnd, blank, end
-#
 # Structural elements: block
-#
-# Inline elements retained in normalization: sup, sub, lb, pb, choice
-#
-# Inline elements ignored in normalization: pageRef
-#
-# Special case: keep choice/option[1] and ignore other <option> elements (arbitrary)
+# Inline elements (empty) retained in normalization: lb, pb
+# Inline elements (with content) retained in normalization: pageRef, sup, sub, choice, option
 
 import sys
 
@@ -34,6 +26,10 @@ from collatex import *
 from xml.dom import pulldom
 import re
 
+inlineEmpty = ['lb', 'pb']
+inlineContent = ['sup', 'sub', 'pageRef', 'choice', 'option']
+sigla = ['Lav', 'Tro', 'Rad', 'Aka', 'Ipa', 'Xle', 'Kom', 'Tol', 'NAk', 'Bych', 'Shakh', 'Likh', 'Ost']
+
 def normalizeSpace(inText):
     return re.sub('\s+', ' ', inText)
 
@@ -41,9 +37,12 @@ def extract(input_xml):
     # Start pulling; it continues automatically
     doc = pulldom.parse(input_xml)
     inBlock = False
-    inLav = False
+    inWit = False
     for event, node in doc:
-        if event == pulldom.START_ELEMENT and node.localName == 'block':
+        # elements to ignore
+        if event == pulldom.START_ELEMENT and node.localName in ['omitted', 'textEnd', 'blank', 'end']:
+            continue
+        elif event == pulldom.START_ELEMENT and node.localName == 'block':
             inBlock = True
             n = node.getAttribute('column') + '.' + node.getAttribute('line') # block number
             inputText = {}
@@ -51,21 +50,22 @@ def extract(input_xml):
             inBlock = False
             print(inputText)
         # empty inline elements: lb, pb
-        elif event == pulldom.START_ELEMENT and node.localName in ['lb', 'pb']:
+        elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
             currentWit = currentWit + '<' + node.localName + '/>'
         # non-empty inline elements: sup, sub, pageRef
-        elif event == pulldom.START_ELEMENT and node.localName in ['sup', 'sub', 'pageRef']:
+        elif event == pulldom.START_ELEMENT and node.localName in inlineContent:
             currentWit = currentWit + '<' + node.localName + '>'
-        elif event == pulldom.END_ELEMENT and node.localName in ['sup', 'sub', 'pageRef']:
+        elif event == pulldom.END_ELEMENT and node.localName in inlineContent:
             currentWit = currentWit + '</' + node.localName + '>'
-        elif event == pulldom.START_ELEMENT and node.localName == 'Lav':
-            inLav = True
+        elif event == pulldom.START_ELEMENT and node.localName in sigla:
+            inWit = True
+            currentSiglum = node.localName
             currentWit = ''
-        elif event == pulldom.CHARACTERS and inLav:
+        elif event == pulldom.CHARACTERS and inWit:
             currentWit = currentWit + normalizeSpace(node.data)
-        elif event == pulldom.END_ELEMENT and node.localName == 'Lav':
-            inLav = False
-            inputText['Lav'] = currentWit
+        elif event == pulldom.END_ELEMENT and node.localName in sigla:
+            inWit = False
+            inputText[currentSiglum] = currentWit
     return
 
 
