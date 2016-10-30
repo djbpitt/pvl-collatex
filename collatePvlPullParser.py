@@ -24,6 +24,7 @@ import sys
 sys.path.append('/Users/djb/collatex/collatex-pythonport')  # CollateX from repo; not installed
 from collatex import *
 from xml.dom import pulldom
+import string
 import re
 import json
 
@@ -33,18 +34,26 @@ inlineEmpty = ['lb', 'pb']
 inlineContent = ['sup', 'sub', 'pageRef', 'choice', 'option']
 sigla = ['Lav', 'Tro', 'Rad', 'Aka', 'Ipa', 'Xle', 'Kom', 'Tol', 'NAk', 'Bych', 'Shakh', 'Likh', 'Ost']
 
-# Precompile regexes
-regexTokenize = re.compile('\s+(?!<(lb|pb|pageRef))')   # Negative lookahead for '<lb', '<pb', '<pageRef'
+# Precompile regexes; lookahead and lookbehind patterns must be of fixed length (no asterisk or plus)
+regexWhitespace = re.compile(r'\s+')
+regexTokenize = re.compile(r'\s+(?!<(lb|pb|pageRef))')   # Negative lookahead for '<lb', '<pb', '<pageRef'
+regexChoice = re.compile(r'<choice>\s*(<option>.+?</option>).*</choice>') # capture first <option>
+regexPageRef = re.compile(r'\s*<pageRef>.+?</pageRef>\s*')
+regexTag = re.compile(r'<.+?>')
+regexPunc = punc = re.compile("[" + string.punctuation + "]")
 
 def normalizeSpace(inText):
     """Replaces all whitespace spans with single space characters"""
-    return re.sub('\s+', ' ', inText)
+    return regexWhitespace.sub(' ', inText)
 
+def reduceChoice(inText):
+    """Keep only first <option> inside <choice>"""
+    return regexChoice.sub(r'\1',inText) # Must be done before tokenization, since <option> may contain multiple tokens
 
 def tokenize(inText):
     """Split into word tokens, merging <lb> and <pb> in with preceding token"""
-    tokens = regexTokenize.split(inText)
-    return [token for token in tokens if token] #TODO: Why does the split create empty tokens?
+    tokens = regexTokenize.split(reduceChoice(normalizeSpace(inText))) # Retain only first of <option> elements inside <choice>
+    return [token for token in tokens if token and not re.match('^<.+?>$',token)] #TODO: Why does the split create empty tokens?
 
 
 def processRdg(siglum, inText):
@@ -59,14 +68,13 @@ def processRdg(siglum, inText):
 def normalize(inText):
     """Create normalized shadow token for collation purposes
 
-    Strip all tags
-    Strip content of <pageRef> elements
-    Retain only first of <option> elements inside <choice>
+    Must be executed in this order:
+        Strip <pageRef> elements, including content
+        Strip all other tags, but not their content
+        Strip punctuation and whitespace
     Lowercase
-    Strip punctuation
-    Strip whitespace
     """
-    return inText.lower()
+    return regexWhitespace.sub('',regexPunc.sub('',regexTag.sub('', regexPageRef.sub('',inText)))).lower()
 
 
 def extract(input_xml):
