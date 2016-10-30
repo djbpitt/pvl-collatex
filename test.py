@@ -71,5 +71,5 @@ jsonInput = {
         }, {"n": "чрнр", "t": "чьрноризьца"}, {"n": "фдсв", "t": "Феодосиева"}]
     }]
 }
-table = collate(jsonInput, segmentation=False)
+table = collate(jsonInput, segmentation=False, near_match=True)
 print(table)
