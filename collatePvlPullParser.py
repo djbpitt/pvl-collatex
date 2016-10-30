@@ -42,7 +42,7 @@ regexPageRef = re.compile(r'\s*<pageRef>.+?</pageRef>\s*')
 regexTag = re.compile(r'<.+?>')
 regexPunc = re.compile("[" + string.punctuation + "]")
 regexGeminate = re.compile(r'(.)\1')
-regexNoninitialVowel = re.compile(r'(?!=.)[аеиоуѧѫѣь]')
+regexNoninitialVowel = re.compile(r'\B[аеиоуѧѫѣь]')
 
 def normalizeSpace(inText):
     """Replaces all whitespace spans with single space characters"""
@@ -159,10 +159,9 @@ def extract(input_xml):
             rdgs['witnesses'] = witnesses
         elif event == pulldom.END_ELEMENT and node.localName == 'block':
             # diagnostic output
-            # jsonInput = json.dumps(rdgs, ensure_ascii=False)
-            # print(jsonInput)
+            jsonInput = json.dumps(rdgs, ensure_ascii=False)
+            print(jsonInput)
             print(n + ' input:\n')
-            print(rdgs)
             print(n + ' output:\n')
             table = collate(rdgs, segmentation=False)
             print(table)
