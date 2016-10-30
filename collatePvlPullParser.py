@@ -155,7 +155,14 @@ def extract(input_xml):
             witnesses = []
             rdgs['witnesses'] = witnesses
         elif event == pulldom.END_ELEMENT and node.localName == 'block':
-            print(json.dumps(rdgs, ensure_ascii=False))
+            # diagnostic output
+            # jsonInput = json.dumps(rdgs, ensure_ascii=False)
+            # print(jsonInput)
+            print(n + ' input:\n')
+            print(rdgs)
+            print(n + ' output:\n')
+            table = collate(rdgs, segmentation=False)
+            print(table)
         # empty inline elements: lb, pb
         elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
             currentRdg += '<' + node.localName + '/>'
@@ -174,7 +181,8 @@ def extract(input_xml):
         elif event == pulldom.END_ELEMENT and node.localName in sigla:
             # Witness finished, so process and push its data
             inWit = False
-            witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
+            if tokenize(currentRdg):
+                witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
     return True
 
 
