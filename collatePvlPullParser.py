@@ -4,9 +4,9 @@
 # First version: 2015-12-13
 # Last revised: 2016-10-29
 #
-# Syntax: python collatePvl.py
+# Syntax: python collatePvlPullParser.py
 # Input: pvl.xml
-# Output: pvl-collated.xml
+# Output: (currently stdout)
 #
 # Synopsis: Collates PVL lines using CollateX
 #
@@ -54,8 +54,9 @@ def reduceChoice(inText):
 
 def tokenize(inText):
     """Split into word tokens, merging <lb> and <pb> in with preceding token"""
-    tokens = regexTokenize.split(reduceChoice(normalizeSpace(inText))) # Retain only first of <option> elements inside <choice>
-    # TODO: Why does the split create empty tokens that then need to be bypassed
+    # Retain only first of <option> elements inside <choice>
+    tokens = regexTokenize.split(reduceChoice(normalizeSpace(inText)))
+    # TODO: Why does the split create empty tokens that then need to be bypassed?
     return [token for token in tokens if token and not re.match('^<.+?>$',token)]
 
 
@@ -66,6 +67,20 @@ def processRdg(siglum, inText):
         token = {'t': token, 'n': normalize(token)}
         witness['tokens'].append(token)
     return witness
+
+
+def normalize(inText):
+    """Create normalized shadow token for collation purposes
+
+    Must be executed in this order:
+        Strip <pageRef> elements, including content
+        Strip all other tags, but not their content
+        Strip punctuation and whitespace
+    Lowercase
+    Soundexify
+    """
+    # TODO: Is there a more legible way to nest the regex replacements?
+    return soundexify(regexWhitespace.sub('',regexPunc.sub('',regexTag.sub('', regexPageRef.sub('',inText)))).lower())
 
 
 def soundexify(inText):
@@ -84,7 +99,8 @@ def soundexify(inText):
     oneToMany = [('ѿ','ѡт'), ('ѯ', 'кс'), ('ѱ', 'пс')]
     for k, v in oneToMany:
         inText = inText.replace(k, v)
-    #TODO: Is there a better way to chain the one-to-one replacements? Same as above concerning definitions.
+    #TODO: Is there a more legible way to chain the one-to-one replacements (see the end of this section)?
+    #TODO: Same question as above concerning definitions.
     # ja letters
     lettersJa = 'ѧѩꙙꙝꙗя'
     lettersJaReplacement = 'ѧ' * len(lettersJa)
@@ -125,19 +141,6 @@ def soundexify(inText):
                              translate(transI).translate(transO).translate(transU).\
                              translate(transON).translate(transJat).translate(transJer).\
                              translate(transZ)))[0:4]
-
-def normalize(inText):
-    """Create normalized shadow token for collation purposes
-
-    Must be executed in this order:
-        Strip <pageRef> elements, including content
-        Strip all other tags, but not their content
-        Strip punctuation and whitespace
-    Lowercase
-    Soundexify
-    """
-    return soundexify(regexWhitespace.sub('',regexPunc.sub('',regexTag.sub('', regexPageRef.sub('',inText)))).lower())
-
 
 def extract(input_xml):
     """Process entire input XML document, firing on events"""
@@ -181,7 +184,7 @@ def extract(input_xml):
         elif event == pulldom.END_ELEMENT and node.localName in sigla:
             # Witness finished, so process and push its data
             inWit = False
-            if tokenize(currentRdg):
+            if tokenize(currentRdg): # omit witnesses with no content
                 witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
     return True
 
