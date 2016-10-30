@@ -10,10 +10,10 @@
 #
 # Synopsis: Collates PVL lines using CollateX
 #
-# Witnesses in order:
+# Witnesses in input (and eventual output) order:
 #   Children of <manuscripts>: Lav, Tro, Rad, Aka, Ipa, Xle, Kom, Tol, NAk
 #   Children of <block>: Bych, Shakh, Likh
-#   Children of <paradosis>: Ost
+#   Child of <paradosis>: Ost
 # Tags to ignore, with content to keep: pvl, manuscripts, paradosis, marginalia, problem
 # Elements to ignore: omitted, textEnd, blank, end
 # Structural elements: block
@@ -40,7 +40,9 @@ regexTokenize = re.compile(r'\s+(?!<(lb|pb|pageRef))')   # Negative lookahead fo
 regexChoice = re.compile(r'<choice>\s*(<option>.+?</option>).*</choice>') # capture first <option>
 regexPageRef = re.compile(r'\s*<pageRef>.+?</pageRef>\s*')
 regexTag = re.compile(r'<.+?>')
-regexPunc = punc = re.compile("[" + string.punctuation + "]")
+regexPunc = re.compile("[" + string.punctuation + "]")
+regexGeminate = re.compile(r'(.)\1')
+regexNoninitialVowel = re.compile(r'(?!=.)[аеиоуѧѫѣь]')
 
 def normalizeSpace(inText):
     """Replaces all whitespace spans with single space characters"""
@@ -53,7 +55,8 @@ def reduceChoice(inText):
 def tokenize(inText):
     """Split into word tokens, merging <lb> and <pb> in with preceding token"""
     tokens = regexTokenize.split(reduceChoice(normalizeSpace(inText))) # Retain only first of <option> elements inside <choice>
-    return [token for token in tokens if token and not re.match('^<.+?>$',token)] #TODO: Why does the split create empty tokens?
+    # TODO: Why does the split create empty tokens that then need to be bypassed
+    return [token for token in tokens if token and not re.match('^<.+?>$',token)]
 
 
 def processRdg(siglum, inText):
@@ -65,6 +68,64 @@ def processRdg(siglum, inText):
     return witness
 
 
+def soundexify(inText):
+    """Soundex normalization
+
+    In this order
+        process the manyToOne, oneToMany, and oneToOne groups
+        degeminate all geminate consonants (e.g., нн > н)
+        strip all non-word-initial vowels
+        truncate long words to no more than four characters"""
+    #http://stackoverflow.com/questions/764360/a-list-of-string-replacements-in-python
+    #TODO: Should the variables be defined outside the function to avoid repeated initialization when called?
+    manyToOne = [('оу', 'у'), ('шт', 'щ')]
+    for k, v in manyToOne:
+        inText = inText.replace(k, v)
+    oneToMany = [('ѿ','ѡт'), ('ѯ', 'кс'), ('ѱ', 'пс')]
+    for k, v in oneToMany:
+        inText = inText.replace(k, v)
+    #TODO: Is there a better way to chain the one-to-one replacements? Same as above concerning definitions.
+    # ja letters
+    lettersJa = 'ѧѩꙙꙝꙗя'
+    lettersJaReplacement = 'ѧ' * len(lettersJa)
+    transJa = str.maketrans(lettersJa, lettersJaReplacement)
+    # e letters
+    lettersE = 'еєѥ'
+    lettersEReplacement = 'е' * len(lettersE)
+    transE = str.maketrans(lettersE, lettersEReplacement)
+    # i letters
+    lettersI = 'ыꙑиіїꙇй'
+    lettersIReplacement = 'и' * len (lettersI)
+    transI = str.maketrans(lettersI, lettersIReplacement)
+    # o letters
+    lettersO = 'оꙩꙫꙭꙮѡꙍѽѻ'
+    lettersOReplacement = 'о' * len(lettersO)
+    transO = str.maketrans(lettersO, lettersOReplacement)
+    # u letters
+    lettersU = 'уꙋюꙕѵѷӱѹ'
+    lettersUReplacement = 'у' * len(lettersU)
+    transU = str.maketrans(lettersU, lettersUReplacement)
+    # oN letters
+    lettersON = 'ѫѭꙛ'
+    lettersONReplacement = 'ѫ' * len(lettersON)
+    transON = str.maketrans(lettersON, lettersONReplacement)
+    # jat letters
+    lettersJat = 'ѣꙓ'
+    lettersJatReplacement = 'ѣ' * len(lettersJat)
+    transJat = str.maketrans(lettersJat, lettersJatReplacement)
+    # jer letters
+    lettersJer = 'ьъ'
+    lettersJerReplacement = 'ь' * len(lettersJer)
+    transJer = str.maketrans(lettersJer, lettersJerReplacement)
+    # z letters
+    lettersZ = 'зꙁꙃѕꙅ'
+    lettersZReplacement = 'з' * len(lettersZ)
+    transZ = str.maketrans(lettersZ, lettersZReplacement)
+    return regexNoninitialVowel.sub('',regexGeminate.sub(r'\1',inText.translate(transJa).translate(transE).\
+                             translate(transI).translate(transO).translate(transU).\
+                             translate(transON).translate(transJat).translate(transJer).\
+                             translate(transZ)))[0:4]
+
 def normalize(inText):
     """Create normalized shadow token for collation purposes
 
@@ -73,8 +134,9 @@ def normalize(inText):
         Strip all other tags, but not their content
         Strip punctuation and whitespace
     Lowercase
+    Soundexify
     """
-    return regexWhitespace.sub('',regexPunc.sub('',regexTag.sub('', regexPageRef.sub('',inText)))).lower()
+    return soundexify(regexWhitespace.sub('',regexPunc.sub('',regexTag.sub('', regexPageRef.sub('',inText)))).lower())
 
 
 def extract(input_xml):
