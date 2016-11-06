@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Filename: collatePVL.py
+# Filename: collatePvlPullParser.py
 # Developer: David J. Birnbaum (djbpitt@gmail.com)
 # First version: 2015-12-13
 # Last revised: 2016-10-29
@@ -21,7 +21,7 @@
 # Inline elements (with content) retained in normalization: pageRef, sup, sub, choice, option
 
 import sys
-sys.path.append('/Users/djb/collatex/collatex-pythonport')  # CollateX from repo; not installed
+# sys.path.append('/Users/djb/collatex/collatex-pythonport')  # CollateX from repo if not installed
 from collatex import *
 from xml.dom import pulldom
 import string
@@ -163,7 +163,7 @@ def extract(input_xml):
             print(jsonInput)
             print(n + ' input:\n')
             print(n + ' output:\n')
-            table = collate(rdgs, segmentation=False)
+            table = collate(rdgs, segmentation=False, near_match=True)
             print(table)
         # empty inline elements: lb, pb
         elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
