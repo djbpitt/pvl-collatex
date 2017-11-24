@@ -21,7 +21,7 @@
 # Inline elements (with content) retained in normalization: pageRef, sup, sub, choice, option
 
 import sys
-# sys.path.append('/Users/djb/collatex/collatex-pythonport')  # CollateX from repo if not installed
+# sys.path.insert(0, '/Users/djb/collatex/collatex-pythonport')  # CollateX from repo if not installed
 from collatex import *
 from xml.dom import pulldom
 import string
@@ -160,10 +160,11 @@ def extract(input_xml):
         elif event == pulldom.END_ELEMENT and node.localName == 'block':
             # diagnostic output
             jsonInput = json.dumps(rdgs, ensure_ascii=False)
-            print(jsonInput)
             print(n + ' input:\n')
+            print(jsonInput)
             print(n + ' output:\n')
             table = collate(rdgs, segmentation=False, near_match=True)
+            outputFile.write('\n' + n + '\n' + str(table))
             print(table)
         # empty inline elements: lb, pb
         elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
@@ -187,11 +188,5 @@ def extract(input_xml):
                 witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
     return True
 
-
-inputFile = open('pvl.xml', 'rb')
-outputFile = open('output.xml', 'w')
-
-parseResult = extract(inputFile)
-
-inputFile.close()
-outputFile.close()
+with open('pvl.xml', 'rb') as inputFile, open('output_near.txt', 'w') as outputFile:
+    parseResult = extract(inputFile)
