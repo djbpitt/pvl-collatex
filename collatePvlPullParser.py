@@ -163,7 +163,7 @@ def extract(input_xml):
             print(n + ' input:\n')
             print(jsonInput)
             print(n + ' output:\n')
-            table = collate(rdgs, segmentation=False, near_match=False)
+            table = collate(rdgs, segmentation=False, near_match=True)
             outputFile.write('\n' + n + '\n' + str(table))
             print(table)
         # empty inline elements: lb, pb
@@ -188,5 +188,5 @@ def extract(input_xml):
                 witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
     return True
 
-with open('pvl.xml', 'rb') as inputFile, open('output_exact.txt', 'w') as outputFile:
+with open('pvl.xml', 'rb') as inputFile, open('output_near.txt', 'w') as outputFile:
     parseResult = extract(inputFile)
