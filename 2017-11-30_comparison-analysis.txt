@@ -1,0 +1,6 @@
+Only issues that might require revision in the near-matching code are mentioned below.
+
+5.3: Some misalignments in columns 2/3 are moved and others aren't, apparently because the misaligned items (Rad, Xle) normalize to the same value, and therefore are perfectly aligned with each other. Fixing this would require looking at moving multiple tokens that have the same "n" value. The problem will appear to go away when I fix the isolated two-letter word in position 2 in Ost (which is an editing error on my part), since there won't be an empty column, and therefore an ambiguity, any more.
+
+
+
