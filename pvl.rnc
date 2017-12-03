@@ -1,0 +1,40 @@
+content = mixed { (lb | pb | sup | sub | problem | marginalia | blank | pageRef)* }
+mscontent = omitted | content | end
+start = pvl
+pvl = element pvl { block+ }
+block = element block { column, line, manuscripts, Bych?, Shakh?, Likh?, paradosis }
+column = attribute column { xsd:int }
+line = attribute line { text }
+manuscripts = element manuscripts { Lav?, Tro?, Rad?, Aka?, Ipa?, Xle?, Kom?, NAk?, Tol? }
+Lav = element Lav { mscontent }
+Tro = element Tro { mscontent, textEnd? }
+Rad = element Rad { mscontent }
+Aka = element Aka { mscontent }
+Ipa = element Ipa { mscontent }
+Xle = element Xle { mscontent }
+Kom = element Kom { mscontent }
+NAk = element NAk { mscontent }
+Tol = element Tol { mscontent }
+Bych = element Bych { mscontent }
+Shakh = element Shakh { mscontent }
+Likh = element Likh { mscontent }
+Ost =
+    element Ost {
+        mixed { choice* }
+        | end
+    }
+paradosis = element paradosis { Ost? }
+pageRef = element pageRef { text }
+sup = element sup { content }
+sub = element sub { content }
+problem = element problem { extent?, content }
+extent = attribute extent { xsd:int }
+marginalia = element marginalia { content }
+lb = element lb { empty }
+pb = element pb { empty }
+omitted = element omitted { empty }
+choice = element choice { option+ }
+option = element option { text }
+textEnd = element textEnd { empty }
+end = element end { empty }
+blank = element blank { empty }

@@ -154,18 +154,20 @@ def extract(input_xml):
         # process each block as a separate collation set
         elif event == pulldom.START_ELEMENT and node.localName == 'block':
             n = node.getAttribute('column') + '.' + node.getAttribute('line')  # block number
+            # diagnostic output
+            if node.getAttribute('line') == '1':
+                print(node.getAttribute('column'), end=' ', flush=True)
             rdgs = {}
             witnesses = []
             rdgs['witnesses'] = witnesses
         elif event == pulldom.END_ELEMENT and node.localName == 'block':
-            # diagnostic output
             jsonInput = json.dumps(rdgs, ensure_ascii=False)
-            print(n + ' input:\n')
-            print(jsonInput)
-            print(n + ' output:\n')
+            # diagnostic output
+            # print(n + ' input:\n')
+            # print(jsonInput)
             table = collate(rdgs, segmentation=False, near_match=True)
             outputFile.write('\n' + n + '\n' + str(table))
-            print(table)
+            # print(table)
         # empty inline elements: lb, pb
         elif event == pulldom.START_ELEMENT and node.localName in inlineEmpty:
             currentRdg += '<' + node.localName + '/>'
@@ -190,3 +192,4 @@ def extract(input_xml):
 
 with open('pvl.xml', 'rb') as inputFile, open('output_near.txt', 'w') as outputFile:
     parseResult = extract(inputFile)
+print('Done')
