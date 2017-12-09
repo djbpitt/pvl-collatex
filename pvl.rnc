@@ -1,4 +1,4 @@
-content = mixed { (lb | pb | sup | sub | problem | marginalia | blank | pageRef)* }
+content = mixed { (lb | pb | sup | sub | problem | marginalia | blank | pageRef | note)* }
 mscontent = omitted | content | end
 start = pvl
 pvl = element pvl { block+ }
@@ -38,3 +38,4 @@ option = element option { text }
 textEnd = element textEnd { empty }
 end = element end { empty }
 blank = element blank { empty }
+note = element note { text }
