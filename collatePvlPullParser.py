@@ -29,7 +29,7 @@ import re
 import json
 
 # GIs fall into one four classes
-ignore = ['omitted', 'textEnd', 'blank', 'end']
+ignore = ['omitted', 'textEnd', 'blank', 'end', 'note']
 inlineEmpty = ['lb', 'pb']
 inlineContent = ['sup', 'sub', 'pageRef', 'choice', 'option']
 sigla = ['Lav', 'Tro', 'Rad', 'Aka', 'Ipa', 'Xle', 'Kom', 'Tol', 'NAk', 'Bych', 'Shakh', 'Likh', 'Ost']
@@ -165,7 +165,7 @@ def extract(input_xml):
             # diagnostic output
             # print(n + ' input:\n')
             # print(jsonInput)
-            table = collate(rdgs, segmentation=False, near_match=True)
+            table = collate(rdgs, segmentation=False, near_match=False)
             outputFile.write('\n' + n + '\n' + str(table))
             # print(table)
         # empty inline elements: lb, pb
@@ -190,6 +190,6 @@ def extract(input_xml):
                 witnesses.append(processRdg(currentSiglum, tokenize(currentRdg)))
     return True
 
-with open('pvl.xml', 'rb') as inputFile, open('output_near.txt', 'w') as outputFile:
+with open('pvl.xml', 'rb') as inputFile, open('output_exact.txt', 'w') as outputFile:
     parseResult = extract(inputFile)
 print('Done')
