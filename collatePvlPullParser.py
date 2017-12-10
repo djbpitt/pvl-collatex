@@ -35,10 +35,11 @@ inlineContent = ['sup', 'sub', 'pageRef', 'choice', 'option']
 sigla = ['Lav', 'Tro', 'Rad', 'Aka', 'Ipa', 'Xle', 'Kom', 'Tol', 'NAk', 'Bych', 'Shakh', 'Likh', 'Ost']
 
 # Precompile regexes; lookahead and lookbehind patterns must be of fixed length (no asterisk or plus)
-regexWhitespace = re.compile(r'\s+')
-regexTokenize = re.compile(r'\s+(?!<(lb|pb|pageRef))')   # Negative lookahead for '<lb', '<pb', '<pageRef'
-regexChoice = re.compile(r'<choice>\s*(<option>.+?</option>).*</choice>') # capture first <option>
-regexPageRef = re.compile(r'\s*<pageRef>.+?</pageRef>\s*')
+# U+00a0 (non-breaking space) is part of \s, so spell it out
+regexWhitespace = re.compile(r'[ \t\r\n]+')
+regexTokenize = re.compile(r'[ \t\r\n]+(?!<(lb|pb|pageRef))')   # Negative lookahead for '<lb', '<pb', '<pageRef'
+regexChoice = re.compile(r'<choice>[ \t\r\n]*(<option>.+?</option>).*</choice>') # capture first <option>
+regexPageRef = re.compile(r'[ \t\r\n]*<pageRef>.+?</pageRef>[ \t\r]*')
 regexTag = re.compile(r'<.+?>')
 regexPunc = re.compile("[" + string.punctuation + "]")
 regexGeminate = re.compile(r'(.)\1')
