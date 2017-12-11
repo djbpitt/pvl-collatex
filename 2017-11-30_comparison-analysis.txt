@@ -1,9 +1,11 @@
 Only issues that might require revision in the near-matching code are mentioned below.
 
-5.3: Some misalignments in columns 2/3 are moved and others aren't, apparently because the misaligned items (Rad, Xle) normalize to the same value, and therefore are perfectly aligned with each other. Fixing this would require looking at moving multiple tokens that have the same "n" value. The problem will appear to go away when I fix the isolated two-letter word in position 2 in Ost (which is an editing error on my part), since there won't be an empty column, and therefore an ambiguity, any more.
+Checked through: 13.19
+Recheck (fixed input): 8.23
+
+1.2: Ost fails to move 3 to 4; this is a digits/words mismatch that might be addressed with a thesaurus.
 
 8.20: The movement of the last token in Rad to the last column is correct, but the one before it should remain in the antepenultimate column, instead of moving to the penult. It's a one-letter match in both columns, but there's a severe difference in length, which is relevant: the long words are verbs and the short ones are pronouns.
 
 9.19: In Rad, Aka, Ipa, Xle, and Ost, columns 2 and 3 should be shifted one to the right. This may be an artifact of our looking only from right to left; we make the best decision for the last tokens without regard to the first, and that turns out to be suboptimal once we look further to the left.
 
-Checked through 11.10.
