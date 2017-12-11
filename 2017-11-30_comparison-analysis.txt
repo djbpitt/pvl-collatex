@@ -1,6 +1,6 @@
 Only issues that might require revision in the near-matching code are mentioned below.
 
-Checked through: 13.19
+Checked through: 16.3
 Recheck (fixed input): 8.23
 
 1.2: Ost fails to move 3 to 4; this is a digits/words mismatch that might be addressed with a thesaurus.
